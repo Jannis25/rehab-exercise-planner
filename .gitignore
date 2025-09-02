@@ -1,0 +1,13 @@
+# Data files
+exercise.json
+
+# Virtual environment
+**/*venv*/
+
+# Python egg information
+**/*.egg-info/
+.egg-info
+
+# Python bytecode
+**/__pycache__/
+**/*.py[cod]
