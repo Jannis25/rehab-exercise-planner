@@ -138,7 +138,7 @@ class MainWindow(QMainWindow):
         dialog = AddPlanDialog(self)
         added = False
         canceled = False
-        while not added or canceled:
+        while not added and not canceled:
             if dialog.exec_() == QDialog.Accepted:
                 if dialog.muscle_group.currentText() != "high-impact" or dialog.pause_days.value() > 0:
                     self.add_task(dialog=dialog)
