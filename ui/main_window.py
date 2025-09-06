@@ -1,5 +1,7 @@
 import json
 import os
+import subprocess
+import sys
 
 from datetime import datetime, timedelta
 from typing import List, Dict, Union, Optional
@@ -10,6 +12,7 @@ from PyQt5.QtWidgets import (
 
 from ui.app_plan_dialog import AddPlanDialog
 from ui.task_checklist import TaskChecklist
+from ui.update_dialog import UpdateDialog
 
 DATA_FILE = "exercise.json"
 TaskType = Dict[str, List[Dict[str, Union[str, bool]]]]
@@ -53,10 +56,28 @@ class MainWindow(QMainWindow):
         self.tasks_data: TaskType = load_tasks()
         self.current_week_start = get_week_dates()[0]
         self.init_ui()
+        if self.check_for_update():
+            dialog = UpdateDialog(self)
+            if dialog.exec_() == QDialog.Accepted:
+                self.restart()
 
     def closeEvent(self, event):
         self.save_tasks()
         event.accept()
+
+    def restart(self):
+        """
+        Restart the application.
+        """
+        if sys.platform == "win32":
+            venv_path = os.path.join(os.path.dirname(__file__), "..", "venv", "Scripts", "activate.bat")
+            command = f'"{venv_path}" && python main.py'
+            subprocess.Popen(command, shell=True)
+        else:
+            venv_path = os.path.join(os.path.dirname(__file__), "..", "venv", "bin", "activate")
+            command = f"source {venv_path} && python main.py"
+            subprocess.Popen(command, shell=True, executable="/bin/bash")
+        self.close()
 
     def init_ui(self):
         """
@@ -194,3 +215,24 @@ class MainWindow(QMainWindow):
                 current += timedelta(days=1)
         self.save_tasks()
         self.update_week_overview()
+
+    def check_for_update(self) -> bool:
+        """
+        Check for updates for the application using git.
+        """
+        try:
+            # Fetch latest changes from origin
+            subprocess.run(["git", "fetch"], check=True, cwd=os.path.dirname(__file__))
+
+            # Check if local main is behind origin/main
+            result = subprocess.run(
+                ["git", "rev-list", "--count", "HEAD..origin/main"],
+                capture_output=True, text=True, check=True, cwd=os.path.dirname(__file__)
+            )
+            behind_count = int(result.stdout.strip())
+            if behind_count > 0:
+                return True
+            else:
+                return False
+        except Exception as e:
+            return False
