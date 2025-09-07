@@ -69,14 +69,14 @@ class MainWindow(QMainWindow):
         """
         Restart the application.
         """
+        base_file = os.path.join(os.path.dirname(__file__), "..")
         if sys.platform == "win32":
-            venv_path = os.path.join(os.path.dirname(__file__), "..", "venv", "Scripts", "activate.bat")
-            command = f'"{venv_path}" && python main.py'
-            subprocess.Popen(command, shell=True)
+            python = os.path.join(os.path.dirname(__file__), "..", "venv", "Scripts", "python.exe")
         else:
-            venv_path = os.path.join(os.path.dirname(__file__), "..", "venv", "bin", "activate")
-            command = f"source {venv_path} && python main.py"
-            subprocess.Popen(command, shell=True, executable="/bin/bash")
+            python = os.path.join(os.path.dirname(__file__), "..", "venv", "bin", "python")
+        subprocess.Popen([python, "-m", "pip", "install", "--upgrade", "pip"], cwd=base_file)
+        subprocess.Popen([python, "-m", "pip", "install", "-r", "requirements.txt"], cwd=base_file)
+        subprocess.Popen([python, "main.py"], cwd=base_file)
         self.close()
 
     def init_ui(self):
@@ -221,13 +221,14 @@ class MainWindow(QMainWindow):
         Check for updates for the application using git.
         """
         try:
+            git_dir = self.find_git_dir()
             # Fetch latest changes from origin
-            subprocess.run(["git", "fetch"], check=True, cwd=os.path.dirname(__file__))
+            subprocess.run(["git", "fetch"], check=True, cwd=git_dir)
 
             # Check if local main is behind origin/main
             result = subprocess.run(
                 ["git", "rev-list", "--count", "HEAD..origin/main"],
-                capture_output=True, text=True, check=True, cwd=os.path.dirname(__file__)
+                capture_output=True, text=True, check=True, cwd=git_dir
             )
             behind_count = int(result.stdout.strip())
             if behind_count > 0:
@@ -236,3 +237,14 @@ class MainWindow(QMainWindow):
                 return False
         except Exception as e:
             return False
+        
+    def find_git_dir(self) -> str:
+        """
+        Find the root directory of the git repository.
+        """
+        current_dir = os.path.dirname(__file__)
+        while current_dir != "/":
+            if os.path.exists(os.path.join(current_dir, ".git")):
+                return current_dir
+            current_dir = os.path.join(current_dir, "..")
+        return "/"
