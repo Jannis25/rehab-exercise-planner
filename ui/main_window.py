@@ -74,9 +74,12 @@ class MainWindow(QMainWindow):
             python = os.path.join(os.path.dirname(__file__), "..", "venv", "Scripts", "python.exe")
         else:
             python = os.path.join(os.path.dirname(__file__), "..", "venv", "bin", "python")
-        subprocess.Popen([python, "-m", "pip", "install", "--upgrade", "pip"], cwd=base_file)
-        subprocess.Popen([python, "-m", "pip", "install", "-r", "requirements.txt"], cwd=base_file)
-        subprocess.Popen([python, "main.py"], cwd=base_file)
+        try:
+            subprocess.run([python, "-m", "pip", "install", "--upgrade", "pip"], cwd=base_file, check=True)
+            subprocess.run([python, "-m", "pip", "install", "-r", "requirements.txt"], cwd=base_file, check=True)
+            subprocess.run([python, "main.py"], cwd=base_file, check=True)
+        except subprocess.CalledProcessError as e:
+            QMessageBox.critical(self, "Restart Failed", f"Failed to restart the application:\n{e}")
         self.close()
 
     def init_ui(self):
@@ -243,8 +246,8 @@ class MainWindow(QMainWindow):
         Find the root directory of the git repository.
         """
         current_dir = os.path.dirname(__file__)
-        while current_dir != "/":
+        while os.path.dirname(current_dir) != current_dir:
             if os.path.exists(os.path.join(current_dir, ".git")):
                 return current_dir
-            current_dir = os.path.join(current_dir, "..")
-        return "/"
+            current_dir = os.path.dirname(current_dir)
+        return current_dir
