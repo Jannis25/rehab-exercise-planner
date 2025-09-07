@@ -14,7 +14,9 @@ class UpdateDialog(QDialog):
 
         self.button_layout = QHBoxLayout()
         self.update_button = QPushButton("Update")
+        self.update_button.setStyleSheet("background-color: green; color: white;")
         self.cancel_button = QPushButton("Cancel")
+        self.cancel_button.setStyleSheet("background-color: red; color: white;")
         self.button_layout.addWidget(self.update_button)
         self.button_layout.addWidget(self.cancel_button)
 
