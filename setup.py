@@ -8,7 +8,7 @@ setup(
     author_email="jannislb@gmail.com",
     packages=find_packages(),
     install_requires=[
-        "pyqt5",
+        "pyqt5>=5.15.0",
     ],
     python_requires=">=3.9",
     classifiers=[
